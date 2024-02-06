@@ -1,0 +1,26 @@
+export const Stories = [
+  {
+    image:
+      "https://images.pexels.com/photos/19402529/pexels-photo-19402529/free-photo-of-woman-behind-leaves.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/18099926/pexels-photo-18099926/free-photo-of-woman-in-tied-crop-top-crouching-on-white-spot.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/17403707/pexels-photo-17403707/free-photo-of-young-man-in-a-trendy-outfit-posing-outdoors.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/19573569/pexels-photo-19573569/free-photo-of-a-restaurant-with-a-mural-on-the-side-of-it.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/20087472/pexels-photo-20087472/free-photo-of-a-woman-is-standing-on-a-chair-and-doing-a-dance.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/11677401/pexels-photo-11677401.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
+  },
+];
