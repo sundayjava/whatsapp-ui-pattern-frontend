@@ -8,7 +8,7 @@ import {
 } from "react-icons/bs";
 import { TbCircleDashed } from "react-icons/tb";
 import ChatCard from "./chatcard/ChatCard";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MessageCard from "./messagecard/MessageCard";
 import { ImAttachment } from "react-icons/im";
 import "./Homepage.css";
@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import Profile from "./profile/Profile";
 import { Menu, MenuItem } from "@mui/material";
 import CreateGroup from "./Group/CreateGroup";
+import { useAppDispatch, useAppSelector } from "../redux/hook";
+import { currentUser, logout } from "../redux/Auth/Action";
 
 const HomePage = () => {
   const [querys, setQuerys] = useState("");
@@ -26,6 +28,9 @@ const HomePage = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isGroup, setIsGroup] = useState(false);
   const open = Boolean(anchorEl);
+  const dispatch = useAppDispatch();
+  const auth = useAppSelector((state) => state.auth);
+  const token = localStorage.getItem("token");
 
   const handleClick = (event: any) => {
     setAnchorEl(event);
@@ -52,6 +57,10 @@ const HomePage = () => {
     setIsProfile(true);
   };
 
+  useEffect(() => {
+    dispatch(currentUser(token));
+  }, [token]);
+
   const handleCloseOpenProfile = () => {
     setIsProfile(false);
   };
@@ -59,6 +68,17 @@ const HomePage = () => {
   const handleCreateGroup = () => {
     setIsGroup(true);
   };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/signup")
+  };
+
+  useEffect(() => {
+    if (!auth.regUser) {
+      navigate("/signup");
+    }
+  }, [auth.regUser]);
 
   return (
     <div className="relative bg-slate-500">
@@ -85,7 +105,7 @@ const HomePage = () => {
                     alt="pixabay"
                     className="rounded-full w-10 h-10 cursor-pointer"
                   />
-                  <p>username</p>
+                  <p>{auth.regUser?.full_name}</p>
                 </div>
                 <div className=" space-x-3 text-2xl flex">
                   <TbCircleDashed
@@ -116,7 +136,7 @@ const HomePage = () => {
                       <MenuItem onClick={handleCreateGroup}>
                         Create Group
                       </MenuItem>
-                      <MenuItem onClick={handleClose}>Logout</MenuItem>
+                      <MenuItem onClick={handleLogout}>Logout</MenuItem>
                     </Menu>
                   </div>
                 </div>

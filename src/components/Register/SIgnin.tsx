@@ -1,7 +1,9 @@
 import { Alert, Button, Snackbar } from "@mui/material";
 import { green } from "@mui/material/colors";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../redux/hook";
+import { currentUser, login } from "../../redux/Auth/Action";
 
 const SIgnin = () => {
   const [inputData, setInputData] = useState({
@@ -9,19 +11,36 @@ const SIgnin = () => {
     password: "",
   });
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch()
+  const token = localStorage.getItem("token")
+  const auth = useAppSelector(state => state.auth)
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
     console.log("submit");
     setOpenSnackbar(true);
-  };
-  const handleChange = () => {};
 
-  const navigate = useNavigate();
+    dispatch(login(inputData))
+  };
+  const handleChange = (e:any) => {
+    const {name,value} = e.target;
+    setInputData((val) => ({...val,[name]:value}))
+  };
 
   const handleSnackbarClose = () => {
     setOpenSnackbar(false);
   };
+
+  useEffect(()=>{
+    if(token)dispatch(currentUser(token))
+  },[token])
+
+  useEffect(()=>{
+    if(auth.regUser?.full_name){
+        navigate("/")
+    }
+  },[auth.regUser])
 
   return (
     <div>
@@ -35,6 +54,7 @@ const SIgnin = () => {
                 placeholder="Enter your Email"
                 onChange={handleChange}
                 value={inputData.email}
+                name="email"
                 className="py-2 outline outline-green-600 w-full rounded-md border"
               />
             </div>
@@ -45,6 +65,7 @@ const SIgnin = () => {
                 placeholder="Enter your Password"
                 onChange={handleChange}
                 value={inputData.password}
+                name="password"
                 className="py-2 outline outline-green-600 w-full rounded-md border"
               />
             </div>

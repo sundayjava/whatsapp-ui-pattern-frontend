@@ -17,6 +17,8 @@ const Signup = () => {
   const auth = useAppSelector(state => state.auth)
   const token = localStorage.getItem("token")
 
+  console.log("Current user ", auth.regUser)
+
   const handleSubmit = (e: any) => {
     e.preventDefault();
     console.log("submit");
