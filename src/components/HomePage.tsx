@@ -1,5 +1,6 @@
 import { AiOutlineSearch } from "react-icons/ai";
 import { BiCommentDetail } from "react-icons/bi";
+import './init'
 import {
   BsEmojiSmile,
   BsFilter,
@@ -17,11 +18,39 @@ import Profile from "./profile/Profile";
 import { Menu, MenuItem } from "@mui/material";
 import CreateGroup from "./Group/CreateGroup";
 import { useAppDispatch, useAppSelector } from "../redux/hook";
-import { currentUser, logout } from "../redux/Auth/Action";
+import { currentUser, logout, searchUser } from "../redux/Auth/Action";
+import { createChat, getUsersChat } from "../redux/chat/Action";
+import { createMessage, getAllMessages } from "../redux/message/Action";
+
+import SockJS from "sockjs-client"
+import Stomp, { Client } from 'stompjs';
+
+type UserType = {
+  id: string;
+  full_name: string;
+  email: string;
+  profile_picture: string;
+};
+
+type CurrentChatType = {
+  id: number;
+  chat_name: string;
+  chat_image: string;
+  admins: UserType[];
+  group: boolean;
+  createdBy: string;
+  users: UserType[];
+  messages: {
+    id: string;
+    content: string;
+    timestamp: string;
+    user: UserType;
+  }[];
+};
 
 const HomePage = () => {
   const [querys, setQuerys] = useState("");
-  const [currentChat, setCurrentChat] = useState(false);
+  const [currentChat, setCurrentChat] = useState<CurrentChatType | null>(null);
   const [content, setContent] = useState("");
   const [isProfile, setIsProfile] = useState(false);
   const navigate = useNavigate();
@@ -30,7 +59,83 @@ const HomePage = () => {
   const open = Boolean(anchorEl);
   const dispatch = useAppDispatch();
   const auth = useAppSelector((state) => state.auth);
+  const chat = useAppSelector((state) => state.chat);
+  const message = useAppSelector((state) => state.message);
   const token = localStorage.getItem("token");
+  const [messages, setMessages] = useState<any[]>([]);
+  {
+    /*Socket Starts Here*/
+   }
+  // const [stompClient, setStompClient] = useState<Client | null>(null);
+  // const [isConnect, setIsConnect] = useState(false);
+
+  // const connect = () => {
+  //   const sock = new SockJS(`${import.meta.env.VITE_BASE_URL}/ws`);
+  //   const temp = Stomp.over(sock);
+  //   setStompClient(temp);
+
+  //   const headers = {
+  //     Authorization: `Bearer ${token}`,
+  //     "X-XSRF-TOKEN": getCookie("XSRF-TOKEN"),
+  //   };
+
+  //   temp.connect(headers, onConnect, onError);
+  // };
+
+  // function getCookie(name: any) {
+  //   const value = `; ${document.cookie}`;
+  //   const parts = value.split(`; ${name}=`);
+  //   if (parts.length === 2) {
+  //     return parts.pop()?.split(";").shift();
+  //   }
+  // }
+
+  // const onError = (error: any) => {
+  //   console.log("No error ", error);
+  // };
+
+  // const onConnect = () => {
+  //   setIsConnect(true);
+  // };
+
+  // useEffect(() => {
+  //   if (message.newMessage && stompClient) {
+  //     setMessages([...messages, message.newMessage]);
+  //     stompClient?.send("/app/message", {}, JSON.stringify(message.newMessage));
+  //   }
+  // }, [message.newMessage]);
+
+  // const onMessageReceive = (payload: any) => {
+  //   console.log("receive message.......................", JSON.parse(payload.body));
+
+  //   const receiveMessage = JSON.parse(payload.body);
+  //   setMessages([...messages, receiveMessage]);
+  // };
+
+  // useEffect(() => {
+  //   if (isConnect && stompClient && auth.regUser && currentChat) {
+  //     const subscription = stompClient.subscribe(
+  //       "/group/" + currentChat.id.toString,
+  //       onMessageReceive
+  //     );
+  //     console.log("hello.................")
+  //     return () => {
+  //       subscription.unsubscribe();
+  //     };
+  //   }
+  // });
+
+  // useEffect(()=>{
+  //   connect()
+  // })
+
+  // useEffect(() => {
+  //   setMessages(message.messages);
+  // }, [message.messages]);
+
+  {
+    /*Socket Ends Here*/
+  }
 
   const handleClick = (event: any) => {
     setAnchorEl(event);
@@ -40,22 +145,38 @@ const HomePage = () => {
     setAnchorEl(null);
   };
 
-  const handleSearch = (e: any) => {
-    console.log(e);
+  const handleSearch = (keyword: any) => {
+    dispatch(searchUser(keyword, token));
   };
 
-  const handleClickOnChatCard = () => {
-    setCurrentChat(true);
+  const handleClickOnChatCard = (item: any) => {
+    // setCurrentChat(item);
+    dispatch(createChat(item.id, token));
+    setQuerys("");
+  };
+
+  const handleCurrentChat = (item: any) => {
+    setCurrentChat(item);
   };
 
   const isReadUserMessage = () => {};
 
-  const handleCreateNewMessage = () => {};
+  const handleCreateNewMessage = () => {
+    dispatch(createMessage(currentChat?.id, content, token));
+  };
 
   const handleNavigate = () => {
     // navigate("/profile")
     setIsProfile(true);
   };
+
+  useEffect(() => {
+    dispatch(getUsersChat(token));
+  }, [chat.createdChat, chat.createdGroup]);
+
+  useEffect(() => {
+    dispatch(getAllMessages(currentChat?.id, token));
+  }, [currentChat, message.newMessage]);
 
   useEffect(() => {
     dispatch(currentUser(token));
@@ -71,7 +192,7 @@ const HomePage = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/signup")
+    navigate("/signup");
   };
 
   useEffect(() => {
@@ -85,7 +206,7 @@ const HomePage = () => {
       <div className="py-14 bg-green-400 w-full"></div>
       <div className="flex bg-[#f0f2f5] h-[90vh] absolute top-[5vh] left-[2vw] w-[96vw]">
         <div className="left w-[30%] bg-[#c8c9cc] h-full">
-          {isGroup && <CreateGroup />}
+          {isGroup && <CreateGroup setIsGroup={setIsGroup} />}
           {/*Profile*/}
           {isProfile && (
             <div className="h-full w-full">
@@ -101,9 +222,12 @@ const HomePage = () => {
                   className="flex items-center space-x-3"
                 >
                   <img
-                    src="https://cdn.pixabay.com/photo/2023/12/12/21/20/dog-8445917_640.jpg"
+                    src={
+                      auth.regUser?.profile_picture ||
+                      "https://cdn.pixabay.com/photo/2023/12/12/21/20/dog-8445917_640.jpg"
+                    }
                     alt="pixabay"
-                    className="rounded-full w-10 h-10 cursor-pointer"
+                    className="rounded-full w-10 h-10 cursor-pointer object-cover"
                   />
                   <p>{auth.regUser?.full_name}</p>
                 </div>
@@ -161,10 +285,62 @@ const HomePage = () => {
               {/*All users*/}
               <div className="bg-white overflow-y-scroll h-[72vh] px-3">
                 {querys &&
-                  [2, 3, 2, 3, 2, 3, 2, 3].map((_) => (
-                    <div onClick={handleClickOnChatCard}>
+                  auth.searchUser?.map((item: any) => (
+                    <div onClick={() => handleClickOnChatCard(item)}>
                       <hr />
-                      <ChatCard />
+                      <ChatCard
+                        name={item.full_name}
+                        item={item}
+                        userImg={
+                          item.profile_picture ||
+                          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+                        }
+                      />
+                    </div>
+                  ))}
+                {chat.chats &&
+                  !querys &&
+                  chat.chats?.map((item: any) => (
+                    <div onClick={() => handleCurrentChat(item)}>
+                      <hr />
+                      {item.group === true ? (
+                        <ChatCard
+                          name={item.chat_name}
+                          item={item}
+                          userImg={
+                            item.chat_image ||
+                            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+                          }
+                        />
+                      ) : (
+                        <ChatCard
+                          isChat={true}
+                          item={item}
+                          name={
+                            auth.regUser?.id !== item.users[0]?.id
+                              ? item.users[0].full_name
+                              : item.users[1].full_name
+                          }
+                          userImg={
+                            auth.regUser?.id !== item.users[0]?.id
+                              ? item.users[0].profile_picture ||
+                                "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+                              : item.users[1].profile_picture ||
+                                "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+                          }
+                          // notification={notifications.length}
+                          // isNotification={
+                          //   notifications[0]?.chat?.id === item.id
+                          // }
+                          // message={
+                          //   (item.id ===
+                          //     messages[message.length - 1]?.chat?.id &&
+                          //     messages[message.length - 1]?.content) ||
+                          //   (item.id === notifications[0]?.chat?.id &&
+                          //     notifications[0]?.content)
+                          // }
+                        />
+                      )}
                     </div>
                   ))}
               </div>
@@ -192,11 +368,26 @@ const HomePage = () => {
               <div className="flex justify-between">
                 <div className="py-3 space-x-4 flex items-center px-3">
                   <img
-                    src="https://cdn.pixabay.com/photo/2024/01/07/11/17/welsh-corgi-8492879_640.jpg"
+                    src={
+                      currentChat.group
+                        ? currentChat.chat_image ||
+                          "https://cdn.pixabay.com/photo/2017/02/01/10/12/characters-2029373_640.png"
+                        : auth.regUser?.id === currentChat.users[0].id
+                        ? currentChat.users[1].profile_picture ||
+                          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+                        : currentChat.users[0].profile_picture ||
+                          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png"
+                    }
                     alt=""
-                    className="w-10 h-10 rounded-full"
+                    className="w-10 h-10 rounded-full object-cover"
                   />
-                  <p>username</p>
+                  <p>
+                    {currentChat.group
+                      ? currentChat.chat_name
+                      : auth.regUser?.id === currentChat.users[0].id
+                      ? currentChat.users[1].full_name
+                      : currentChat.users[0].full_name}
+                  </p>
                 </div>
                 <div className="py-3 flex space-x-4 items-center px-3">
                   <AiOutlineSearch />
@@ -207,12 +398,13 @@ const HomePage = () => {
             {/*Message section*/}
             <div className="px-10 h-[85vh] overflow-y-scroll bg-blue-200">
               <div className="space-x-1 flex flex-col justify-center mt-20 py-2">
-                {[1, 3, 2, 3, 2, 3, 2, 3].map((_, i) => (
-                  <MessageCard
-                    content="Message"
-                    isReadUserMessage={i % 2 == 0}
-                  />
-                ))}
+                {message.messages.length > 0 &&
+                  message.messages?.map((item: any, i: any) => (
+                    <MessageCard
+                      content={item.content}
+                      isReadUserMessage={item.user.id !== auth.regUser.id}
+                    />
+                  ))}
               </div>
             </div>
 
@@ -224,7 +416,7 @@ const HomePage = () => {
                 <input
                   type="text"
                   onChange={(e) => setContent(e.target.value)}
-                  className="py-2 outline-none border-none bg-white pl-4 rounded-md w-[85%]"
+                  className="py-2 outline-none border-none bg-white pl-4 rounded-md w-[85%] text-[16px]"
                   placeholder="type message"
                   value={content}
                   onKeyPress={(e) => {

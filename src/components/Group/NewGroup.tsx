@@ -1,10 +1,67 @@
-import { Button, CircularProgress } from "@mui/material";
+import { Avatar, Button, CircularProgress } from "@mui/material";
 import { useState } from "react";
 import { BsArrowLeft, BsCheck2 } from "react-icons/bs";
+import { useAppDispatch } from "../../redux/hook";
+import { createGroupChat } from "../../redux/chat/Action";
 
-const NewGroup = () => {
+const NewGroup: React.FC<{
+  groupMember: any;
+  setIsGroup: any;
+}> = (props) => {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [groupName, setGroupName] = useState("");
+  const [groupImage, setgroupImage] = useState("");
+  const token = localStorage.getItem("token");
+
+  const dispatch = useAppDispatch();
+
+  const uploadFileToCloudinary = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+
+    if (files) {
+      setIsImageUploading(true);
+      const pics = files[0];
+
+      const imgdata = new FormData();
+      imgdata.append("file", pics);
+      imgdata.append("upload_preset", "wxhu0vye");
+      imgdata.append("cloud_name", "dh3p0s6gc");
+      fetch("https://api.cloudinary.com/v1_1/dh3p0s6gc/image/upload", {
+        method: "POST",
+        body: imgdata,
+      })
+        .then((res) => res.json())
+        .then((img) => {
+          setgroupImage(img.url);
+          console.log("Image", img);
+          setIsImageUploading(false);
+        })
+        .catch((err) => console.log(err));
+    } else {
+      console.log("No file selected");
+    }
+  };
+
+  const handleCreateGroup = () => {
+    let userIds = [];
+
+    for (let user of props.groupMember) {
+      userIds.push(user.id);
+    }
+
+    const group = {
+      userIds,
+      chat_name: groupName,
+      chat_image: groupImage,
+    };
+
+    const data = {
+      group,
+      token,
+    };
+    dispatch(createGroupChat(data));
+    props.setIsGroup(false);
+  };
 
   return (
     <div className="w-full h-full">
@@ -14,9 +71,14 @@ const NewGroup = () => {
       </div>
       <div className="flex flex-col justify-center items-center my-12">
         <label htmlFor="imgInput" className="relative">
-          <img
-            alt=""
-            src="https://images.pexels.com/photos/17371711/pexels-photo-17371711/free-photo-of-pretty-girl-with-a-yellow-flower-between-her-fingers-as-a-ring.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
+        
+          <Avatar
+            sx={{ width: "15rem", height: "15rem" }}
+            alt="New group"
+            src={
+              groupImage ||
+              "https://images.pexels.com/photos/17371711/pexels-photo-17371711/free-photo-of-pretty-girl-with-a-yellow-flower-between-her-fingers-as-a-ring.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
+            }
           />
           {isImageUploading && (
             <CircularProgress className=" absolute top-[5rem] left-[6rem]" />
@@ -26,7 +88,7 @@ const NewGroup = () => {
           type="file"
           id="imgInput"
           className="hidden"
-          onChange={() => console.log("Image Change")}
+          onChange={(e) => uploadFileToCloudinary(e)}
           value={""}
         />
       </div>
@@ -42,7 +104,7 @@ const NewGroup = () => {
 
       {groupName && (
         <div className="py-10 bg-slate-200 flex items-center justify-center">
-          <Button>
+          <Button onClick={handleCreateGroup}>
             <div className="bg-green-600 rounded-full p-4">
               <BsCheck2 className="text-white font-bold text-3xl" />
             </div>

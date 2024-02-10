@@ -14,7 +14,9 @@ interface AuthState {
   updateUser?: any; // Replace 'any' with the actual type of your signup payload
 }
 
-const initialState: AuthState = {};
+const initialState: AuthState = {
+  regUser:null
+};
 
 export const authReducer = (
   state: AuthState = initialState,

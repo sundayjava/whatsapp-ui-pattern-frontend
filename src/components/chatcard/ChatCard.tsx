@@ -1,15 +1,26 @@
-const ChatCard = () => {
+type ItemChat = {
+  full_name?: string;
+  email?: string;
+  profile_picture?: string;
+};
+
+const ChatCard: React.FC<{
+  item: ItemChat;
+  isChat?: boolean;
+  name?: string;
+  userImg?: string;
+  notification?: any;
+  isNotification?: any;
+  message?: any;
+}> = (props) => {
   return (
     <div className="flex items-center justify-centerpy-2 group cursor-pointer mb-3">
       <div className="w-[20%">
-        <img
-          src="https://cdn.pixabay.com/photo/2023/12/12/15/47/welding-8445458_640.jpg"
-          className="h-14 w-14 rounded-full"
-        />
+        <img src={props.userImg} className="h-14 w-14 rounded-full object-cover" />
       </div>
       <div className="pl-5 w-[80%]">
         <div className="flex justify-between items-center">
-          <p className="text-lg">username</p>
+          <p className="text-lg">{props.name?.slice(0,9)}...</p>
           <p className="text-sm">timestamp</p>
         </div>
 
